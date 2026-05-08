@@ -1,0 +1,11 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# MacOS system files
+.DS_Store
+
+target/
+
+logs/
+*.log
