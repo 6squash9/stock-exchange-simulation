@@ -4,6 +4,7 @@ import com.tradecore.exchange.order.ISimpleOrder;
 import com.tradecore.exchange.order.LimitOrder;
 import com.tradecore.exchange.order.MarketOrder;
 import com.tradecore.exchange.order.Side;
+import com.tradecore.exchange.persistence.TradeRepository;
 import com.tradecore.exchange.publisher.MarketDataPublisher;
 import com.tradecore.exchange.visualizer.GraphVisualizer;
 
@@ -27,9 +28,10 @@ public class MatchingEngine implements ISimpleMatchingEngine, Runnable {
     private final Deque<MarketOrder> marketBuy = new ArrayDeque<>();
     private final Deque<MarketOrder> marketSell = new ArrayDeque<>();
     private final MarketDataPublisher publisher;
+    private final String sessionId;
 
-
-    public MatchingEngine(MarketDataPublisher publisher) {
+    public MatchingEngine(MarketDataPublisher publisher,String sessionId) {
+        this.sessionId = sessionId;
         this.publisher = publisher;
         this.engineThread = new Thread(this, "matching-engine-thread");
     }
@@ -107,7 +109,10 @@ public class MatchingEngine implements ISimpleMatchingEngine, Runnable {
             GraphVisualizer.updateStockPrice(lastPrice);
             // Debug
             System.out.println("✅ Trade at: " + lastPrice + " | Qty: " + tradedQuantity);
+            // Publish market data update
             publisher.publish(buyOrder,lastPrice.doubleValue(), tradedQuantity.intValue());
+            // Persist trade details
+            TradeRepository.insert(buyOrder.getOrderId().toString(), sellOrder.getOrderId().toString(), lastPrice.toString(), "MARKET_BUY", lastPrice.doubleValue(), tradedQuantity.doubleValue(), sessionId);
             if (buyOrder.getQuantity().compareTo(sellOrder.getQuantity()) > 0) {
                 buyOrder.setQuantity(buyOrder.getQuantity().subtract(tradedQuantity));
                 asks.poll();
@@ -138,7 +143,11 @@ public class MatchingEngine implements ISimpleMatchingEngine, Runnable {
             lastPrice = buyOrder.getPrice();
             GraphVisualizer.updateStockPrice(lastPrice);
 
+            // publish market data update
             publisher.publish(sellOrder,lastPrice.doubleValue(),tradedQuantity.intValue());
+            // Persist trade details
+            TradeRepository.insert(buyOrder.getOrderId().toString(), sellOrder.getOrderId().toString(),
+                    lastPrice.toString(), "MARKET_SELL", lastPrice.doubleValue(), tradedQuantity.doubleValue(), sessionId);
 
             if (buyOrder.getQuantity().compareTo(sellOrder.getQuantity()) > 0) {
                 buyOrder.setQuantity(buyOrder.getQuantity().subtract(tradedQuantity));
@@ -173,7 +182,9 @@ public class MatchingEngine implements ISimpleMatchingEngine, Runnable {
                     GraphVisualizer.updateStockPrice(lastPrice);
 
                     publisher.publish(buyOrder, lastPrice.doubleValue(), tradedQuantity.intValue());
-
+                    // Persist trade details
+            TradeRepository.insert(buyOrder.getOrderId().toString(), sellOrder.getOrderId().toString(),
+                    lastPrice.toString(), "LIMIT_LIMIT", lastPrice.doubleValue(), tradedQuantity.doubleValue(), sessionId);
                     if (buyOrder.getQuantity().compareTo(sellOrder.getQuantity()) > 0) {
                         buyOrder.setQuantity(buyOrder.getQuantity().subtract(tradedQuantity));
                         asks.poll();

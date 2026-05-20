@@ -8,6 +8,7 @@ public class LimitOrder implements ISimpleOrder {
     private final BigDecimal price;
     private final Side side;
     private long sequenceId;
+    private String botId;
 
     //timestamps
     private long timestampReceived;
@@ -122,5 +123,13 @@ public class LimitOrder implements ISimpleOrder {
         return timestampPublished;
     }
 
+    @Override
+    public String getBotId() {
+        return "";
+    }
 
+    @Override
+    public void setBotId(String botId) {
+        this.botId = botId;
+    }
 }

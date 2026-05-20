@@ -1,6 +1,7 @@
 package com.tradecore.exchange.ordermanager;
 
 import com.tradecore.exchange.order.ISimpleOrder;
+import com.tradecore.exchange.persistence.OrderRepository;
 import com.tradecore.exchange.sequencer.Sequencer;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -12,9 +13,11 @@ public class OrderManagerService implements OrderManager {
     private static final Logger logger = LoggerFactory.getLogger(OrderManagerService.class);
     private final Sequencer sequencer;
     private final AtomicLong sequenceCounter = new AtomicLong(0);
+    private final String sessionId;
 
-    public OrderManagerService(Sequencer sequencer) {
+    public OrderManagerService(Sequencer sequencer,String sessionId) {
         this.sequencer = sequencer;
+        this.sessionId = sessionId;
         logger.info("[OrderManager] Initialized");
     }
 
@@ -23,6 +26,8 @@ public class OrderManagerService implements OrderManager {
         // capture order received time
         long timeReceived = System.nanoTime();
         order.setTimestampReceived(timeReceived);
+        // persist the order immediately with botId and sessionId for traceability
+        OrderRepository.insert(order, order.getBotId(), sessionId);
         //assign sequence id's immediately
         long sequenceId = sequenceCounter.incrementAndGet(); //unique sequence ID
         order.setSequenceId(sequenceId);
