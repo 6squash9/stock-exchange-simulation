@@ -15,7 +15,7 @@ public class LatencyManager {
     //List to store all the Latencies
     private final List<LatencyRecord> latencyRecords = Collections.synchronizedList(new ArrayList<>());
 
-    public void recordLatency(ISimpleOrder order){
+    public LatencyRecord recordLatency(ISimpleOrder order){
         // Compute stage-wise latencies (convert ns → µs)
         long validationLatencyMicros = TimeUnit.NANOSECONDS.toMicros(
                 order.getTimestampValidated() - order.getTimestampReceived());
@@ -36,6 +36,8 @@ public class LatencyManager {
         LatencyRecord record = new LatencyRecord(order.getOrderId(),validationLatencyMicros,sequencingLatencyMicros,matchingLatencyMicros,publishingLatencyMicros,totalLatencyMicros);
         //store it
         latencyRecords.add(record);
+
+        return record;
     }
 
     public void printAverageLatency(){

@@ -8,6 +8,8 @@ import java.util.UUID;
  * This provides a contract for different order types like Limit and Market orders.
  */
 public interface ISimpleOrder {
+    void setBotId(String botId);
+    String getBotId();
     /**
      * Gets the unique identifier for the order.
      */
@@ -82,4 +84,6 @@ public interface ISimpleOrder {
     void setTimestampPublished(long timestamp);
 
     long getTimestampPublished();
+
+
 }

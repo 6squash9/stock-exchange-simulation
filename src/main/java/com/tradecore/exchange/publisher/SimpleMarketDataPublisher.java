@@ -3,7 +3,9 @@ package com.tradecore.exchange.publisher;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.tradecore.exchange.metrics.LatencyManager;
+import com.tradecore.exchange.metrics.LatencyRecord;
 import com.tradecore.exchange.order.ISimpleOrder;
+import com.tradecore.exchange.persistence.LatencyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,9 +16,12 @@ public class SimpleMarketDataPublisher implements MarketDataPublisher {
     private volatile int lastVolume = 0;
     private volatile long lastUpdateTime = System.currentTimeMillis();
     private final LatencyManager latencyManager;
+    private final String sessionId;
+
     //Constructor
-    public SimpleMarketDataPublisher(LatencyManager latencyManager){
+    public SimpleMarketDataPublisher(LatencyManager latencyManager,String sessionId) {
         this.latencyManager = latencyManager;
+        this.sessionId = sessionId;
     }
 
     @Override
@@ -40,7 +45,8 @@ public class SimpleMarketDataPublisher implements MarketDataPublisher {
         order.setTimestampPublished(publishEnd);
 
         if(latencyManager != null){
-            latencyManager.recordLatency(order);
+            LatencyRecord record = latencyManager.recordLatency(order);
+            LatencyRepository.insert(record,sessionId);
         }
     }
 

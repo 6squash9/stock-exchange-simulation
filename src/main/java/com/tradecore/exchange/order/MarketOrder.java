@@ -7,6 +7,7 @@ public class MarketOrder implements ISimpleOrder{
     private BigDecimal quantity;
     private final Side side;
     private long sequenceId;
+    private String botId;
 
     //timestamps
     private long timestampReceived;
@@ -117,5 +118,12 @@ public class MarketOrder implements ISimpleOrder{
         return timestampPublished;
     }
 
-
+    @Override
+    public String getBotId() {
+        return botId;
+    }
+    @Override
+     public void setBotId(String botId) {
+        this.botId = botId;
+    }
 }

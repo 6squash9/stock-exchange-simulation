@@ -6,30 +6,37 @@ import com.tradecore.exchange.bots.strategies.RetailTraderStrategy;
 import com.tradecore.exchange.matchingengine.MatchingEngine;
 import com.tradecore.exchange.metrics.LatencyManager;
 import com.tradecore.exchange.ordermanager.OrderManagerService;
+import com.tradecore.exchange.persistence.DatabaseManager;
+import com.tradecore.exchange.persistence.SessionRepository;
 import com.tradecore.exchange.publisher.MarketDataLogger;
 import com.tradecore.exchange.publisher.SimpleMarketDataPublisher;
 import com.tradecore.exchange.sequencer.SequencerService;
 import com.tradecore.exchange.visualizer.GraphVisualizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.UUID;
 
 
 public class App {
     private static final Logger logger = LoggerFactory.getLogger(App.class);
     public static void main(String[] args) {
+        // Initialize database
+        DatabaseManager.initialize();
+        String sessionId = UUID.randomUUID().toString();
+        SessionRepository.insert(sessionId,"SYNCHRONIZED");
 
         GraphVisualizer.start();
         logger.info("🚀 Starting Exchange\n");
         //
         LatencyManager latencyManager = new LatencyManager();
-        SimpleMarketDataPublisher publisher = new SimpleMarketDataPublisher(latencyManager);
-        MatchingEngine matchingEngine = new MatchingEngine(publisher);
+        SimpleMarketDataPublisher publisher = new SimpleMarketDataPublisher(latencyManager,sessionId);
+        MatchingEngine matchingEngine = new MatchingEngine(publisher,sessionId);
         matchingEngine.start();
 
         publisher.subscribe(new MarketDataLogger());
 
         SequencerService sequencer = new SequencerService(matchingEngine);
-        OrderManagerService orderManager = new OrderManagerService(sequencer);
+        OrderManagerService orderManager = new OrderManagerService(sequencer,sessionId);
         sequencer.start();
 
         // Create bots
@@ -86,6 +93,9 @@ public class App {
         logger.info("Throughput (orders/sec): {}", String.format("%.2f", throughput));
 
         logger.info("\n✅ Done\n");
+
+        // Persist session results
+        SessionRepository.update(sessionId, runtimeSeconds, totalOrdersSubmitted, totalOrdersProcessed, throughput);
         System.exit(0);
 
     }

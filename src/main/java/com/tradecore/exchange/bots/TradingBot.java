@@ -59,7 +59,7 @@ public class TradingBot implements MarketDataListener {
                 logger.error("🚨 BOT {} CREATED ORDER WITH NULL PRICE!", botId);
                 return;
             }
-
+            order.setBotId(botId); //tag the order with botId for traceability
             orderManager.submitOrder(order);
             ordersSubmitted.incrementAndGet();
 
